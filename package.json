@@ -1,0 +1,16 @@
+{
+  "name": "jwt-token-api",
+  "version": "1.0.0",
+  "description": "Complete JWT Token Management API with Documentation",
+  "main": "api/index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel deploy --prod"
+  },
+  "dependencies": {
+    "danger-ffjwt": "^1.0.0"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
+}
