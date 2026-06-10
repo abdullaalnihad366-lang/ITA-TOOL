@@ -1,40 +1,421 @@
-const { 
-    getTokenFromRequest, 
-    successResponse, 
-    errorResponse, 
-    validateToken,
-    handleOperation,
-    getAvailableOperations
-} = require('../utils/jwt-helpers');
+const dangerFfjwt = require('danger-ffjwt');
 
-// HTML documentation page
-const getDocumentationHTML = () => `
+// HTML Documentation
+const getHTML = () => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JWT Token Management API - Documentation</title>
+    <title>JWT Token Management API</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-        
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .base-url {
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+        }
+        .content { padding: 40px; }
+        .section { margin-bottom: 40px; }
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .endpoint-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+            gap: 20px;
+        }
+        .endpoint-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+        .endpoint-header {
+            background: #667eea;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .endpoint-path { font-family: monospace; font-weight: bold; }
+        .endpoint-method {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        .endpoint-body { padding: 20px; }
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 0.85em;
+            margin: 10px 0;
+        }
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            margin-left: 10px;
+        }
+        .badge-token { background: #ffc107; color: #000; }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+        }
+        @media (max-width: 768px) {
+            .endpoint-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.8em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 ITA Tool - JWT API</h1>
+            <p>Complete REST API for JWT token operations</p>
+            <div class="base-url">
+                🌐 Base URL: <span id="baseUrl"></span>
+            </div>
+        </div>
+        <div class="content">
+            <div class="section">
+                <h2>📋 Available Endpoints</h2>
+                <div class="endpoint-grid">
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="endpoint-path">/api/access-to-jwt</span>
+                            <span class="endpoint-method">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-description">
+                                Convert Access Token to JWT
+                                <span class="badge badge-token">Requires Token</span>
+                            </div>
+                            <div class="code-block">
+                                curl -X POST https://YOUR_URL/api/access-to-jwt \<br>
+                                &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                                &nbsp;&nbsp;-d '{"token":"your_token_here"}'
+                            </div>
+                        </div>
+                    </div>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="endpoint-path">/api/eat-to-access</span>
+                            <span class="endpoint-method">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-description">
+                                Convert EAT Token to Access Token
+                                <span class="badge badge-token">Requires Token</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="endpoint-path">/api/eat-to-jwt</span>
+                            <span class="endpoint-method">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-description">
+                                Convert EAT Token directly to JWT
+                                <span class="badge badge-token">Requires Token</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="endpoint-path">/api/guest-to-access</span>
+                            <span class="endpoint-method">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-description">
+                                Convert Guest Token to Access Token
+                                <span class="badge badge-token">Requires Token</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="endpoint-path">/api/guest-to-jwt</span>
+                            <span class="endpoint-method">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-description">
+                                Convert Guest Token to JWT
+                                <span class="badge badge-token">Requires Token</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="endpoint-path">/api/inspect-token</span>
+                            <span class="endpoint-method">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-description">
+                                Inspect Access Token details
+                                <span class="badge badge-token">Requires Token</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="endpoint-path">/api/decode-jwt</span>
+                            <span class="endpoint-method">POST</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-description">
+                                Decode JWT token payload
+                                <span class="badge badge-token">Requires Token</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="endpoint-path">/api/convert-timestamp</span>
+                            <span class="endpoint-method">GET</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-description">
+                                Convert Unix timestamp to readable date
+                                <span class="badge">No Token Required</span>
+                            </div>
+                            <div class="code-block">
+                                curl "https://YOUR_URL/api/convert-timestamp?timestamp=1609459200"
+                            </div>
+                        </div>
+                    </div>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="endpoint-path">/api/platform</span>
+                            <span class="endpoint-method">GET</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-description">
+                                Get platform name and information
+                                <span class="badge">No Token Required</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="endpoint-card">
+                        <div class="endpoint-header">
+                            <span class="endpoint-path">/api/endpoints</span>
+                            <span class="endpoint-method">GET</span>
+                        </div>
+                        <div class="endpoint-body">
+                            <div class="endpoint-description">
+                                List all available endpoints
+                                <span class="badge">No Token Required</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <h2>🚀 Quick Test Commands</h2>
+                <div class="code-block">
+# Test platform info
+curl https://YOUR_URL/api/platform
+
+# Test timestamp conversion
+curl https://YOUR_URL/api/convert-timestamp
+
+# List all endpoints
+curl https://YOUR_URL/api/endpoints
+
+# Decode JWT (replace with your token)
+curl -X POST https://YOUR_URL/api/decode-jwt \
+  -H "Content-Type: application/json" \
+  -d '{"token":"your_jwt_token_here"}'
+                </div>
+            </div>
+        </div>
+        <div class="footer">
+            <p>JWT Token Management API | Deployed on Vercel</p>
+            <p>All endpoints support CORS | Response format: JSON</p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('baseUrl').textContent = window.location.origin;
+    </script>
+</body>
+</html>
+`;
+
+// Helper functions
+const successResponse = (data, message = 'Success') => ({
+    success: true,
+    message,
+    data,
+    timestamp: new Date().toISOString()
+});
+
+const errorResponse = (message, statusCode = 400, details = null) => ({
+    success: false,
+    error: message,
+    statusCode,
+    details,
+    timestamp: new Date().toISOString()
+});
+
+const getTokenFromRequest = (req) => {
+    // Check body
+    if (req.body && req.body.token) return req.body.token;
+    // Check query
+    if (req.query && req.query.token) return req.query.token;
+    // Check headers
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        return authHeader.substring(7);
+    }
+    return null;
+};
+
+const getAvailableOperations = () => ({
+    'access-to-jwt': { method: ['POST'], description: 'Convert Access Token to JWT', requiresToken: true },
+    'eat-to-access': { method: ['POST'], description: 'Convert EAT to Access Token', requiresToken: true },
+    'eat-to-jwt': { method: ['POST'], description: 'Convert EAT to JWT', requiresToken: true },
+    'guest-to-access': { method: ['POST'], description: 'Convert Guest to Access Token', requiresToken: true },
+    'guest-to-jwt': { method: ['POST'], description: 'Convert Guest to JWT', requiresToken: true },
+    'inspect-token': { method: ['POST'], description: 'Inspect Access Token', requiresToken: true },
+    'decode-jwt': { method: ['POST'], description: 'Decode JWT Token', requiresToken: true },
+    'convert-timestamp': { method: ['GET'], description: 'Convert Timestamp', requiresToken: false },
+    'platform': { method: ['GET'], description: 'Get Platform Info', requiresToken: false },
+    'endpoints': { method: ['GET'], description: 'List Endpoints', requiresToken: false }
+});
+
+module.exports = async (req, res) => {
+    // CORS headers
+    res.setHeader('Access-Control-Allow-Credentials', true);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+    
+    // Handle preflight
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    
+    const url = req.url;
+    const path = url.split('?')[0];
+    
+    // Serve documentation
+    if (path === '/' || path === '/api' || path === '/api/') {
+        res.setHeader('Content-Type', 'text/html');
+        return res.status(200).send(getHTML());
+    }
+    
+    // Get endpoints list
+    if (path === '/api/endpoints') {
+        return res.status(200).json(successResponse(getAvailableOperations(), 'Available endpoints retrieved'));
+    }
+    
+    // Get platform info
+    if (path === '/api/platform') {
+        try {
+            const result = dangerFfjwt.get_platform_name();
+            return res.status(200).json(successResponse(result, 'Platform info retrieved'));
+        } catch (error) {
+            return res.status(500).json(errorResponse(error.message, 500));
+        }
+    }
+    
+    // Convert timestamp
+    if (path === '/api/convert-timestamp') {
+        try {
+            let timestamp = req.query.timestamp;
+            if (!timestamp) {
+                timestamp = Math.floor(Date.now() / 1000);
+            } else {
+                timestamp = parseInt(timestamp);
+            }
+            const result = dangerFfjwt.convert_timestamp(timestamp);
+            return res.status(200).json(successResponse(result, 'Timestamp converted successfully'));
+        } catch (error) {
+            return res.status(400).json(errorResponse(error.message, 400));
+        }
+    }
+    
+    // Handle token operations
+    const operation = path.replace('/api/', '');
+    const operations = getAvailableOperations();
+    
+    if (!operations[operation]) {
+        return res.status(404).json(errorResponse(`Operation '${operation}' not found. Visit / to see available endpoints.`, 404));
+    }
+    
+    // Check for token
+    const token = getTokenFromRequest(req);
+    if (!token) {
+        return res.status(400).json(errorResponse('Token is required. Provide token in request body, query parameter, or Authorization header.', 400));
+    }
+    
+    try {
+        let result;
+        switch(operation) {
+            case 'access-to-jwt':
+                result = dangerFfjwt.access_to_jwt(token);
+                break;
+            case 'eat-to-access':
+                result = dangerFfjwt.eat_to_access(token);
+                break;
+            case 'eat-to-jwt':
+                result = dangerFfjwt.eat_to_jwt(token);
+                break;
+            case 'guest-to-access':
+                result = dangerFfjwt.guest_to_access(token);
+                break;
+            case 'guest-to-jwt':
+                result = dangerFfjwt.guest_to_jwt(token);
+                break;
+            case 'inspect-token':
+                result = dangerFfjwt.inspect_access_token(token);
+                break;
+            case 'decode-jwt':
+                result = dangerFfjwt.decode_jwt(token);
+                break;
+            default:
+                return res.status(400).json(errorResponse(`Unknown operation: ${operation}`, 400));
+        }
+        
+        return res.status(200).json(successResponse(result, `${operation} completed successfully`));
+    } catch (error) {
+        return res.status(400).json(errorResponse(error.message, 400, error.stack));
+    }
+};            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
             overflow: hidden;
         }
         
