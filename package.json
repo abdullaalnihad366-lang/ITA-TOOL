@@ -1,14 +1,15 @@
 {
-  "name": "jwt-token-api",
+  "name": "ita-tool",
   "version": "1.0.0",
-  "description": "Complete JWT Token Management API with Documentation",
+  "description": "JWT Token Management API",
   "main": "api/index.js",
   "scripts": {
-    "dev": "vercel dev",
-    "deploy": "vercel deploy --prod"
+    "start": "node api/index.js",
+    "dev": "vercel dev"
   },
   "dependencies": {
-    "danger-ffjwt": "^1.0.0"
+    "danger-ffjwt": "^1.0.0",
+    "jsonwebtoken": "^9.0.0"
   },
   "devDependencies": {
     "vercel": "^32.0.0"
